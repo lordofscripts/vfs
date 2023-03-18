@@ -77,9 +77,11 @@ func (b *MemFile) Write(p []byte) (n int, err error) {
 
 // Seek sets the offset for the next Read or Write on the buffer to offset,
 // interpreted according to whence:
-// 	0 (os.SEEK_SET) means relative to the origin of the file
-// 	1 (os.SEEK_CUR) means relative to the current offset
-// 	2 (os.SEEK_END) means relative to the end of the file
+//
+//	0 (os.SEEK_SET) means relative to the origin of the file
+//	1 (os.SEEK_CUR) means relative to the current offset
+//	2 (os.SEEK_END) means relative to the end of the file
+//
 // It returns the new offset and an error, if any.
 func (b *MemFile) Seek(offset int64, whence int) (n int64, err error) {
 	b.mutex.RLock()

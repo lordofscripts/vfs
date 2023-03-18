@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/blang/vfs"
+	"github.com/3JoB/vfs"
 )
 
 type myFS struct {
@@ -14,7 +14,7 @@ type myFS struct {
 
 func MyFS() *myFS {
 	return &myFS{
-		vfs.Dummy(errors.New("Not implemented yet!")),
+		Filesystem: vfs.Dummy(errors.New("Not implemented yet!")),
 	}
 }
 
@@ -35,7 +35,6 @@ func ExampleDummyFS() {
 	// and return the dummys error
 	_, err := vfs.Create(fs, "/tmp/vfs/example.txt")
 	if err != nil {
-		fmt.Printf("Error will be: Not implemented yet!\n")
+		fmt.Print("Error will be: Not implemented yet!\n")
 	}
-
 }

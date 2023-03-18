@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/blang/vfs"
-	"github.com/blang/vfs/memfs"
+	"github.com/3JoB/vfs"
+	"github.com/3JoB/vfs/memfs"
 )
 
 const prefixPath = "/prefix"
@@ -35,13 +35,12 @@ func TestOpenFile(t *testing.T) {
 	fs := Create(rfs, prefixPath)
 
 	f, err := fs.OpenFile("file", os.O_CREATE, 0666)
-	defer f.Close()
 	if err != nil {
 		t.Errorf("OpenFile: %v", err)
 	}
+	defer f.Close()
 
-	_, err = rfs.Stat(prefix("file"))
-	if os.IsNotExist(err) {
+	if _, err := rfs.Stat(prefix("file")); os.IsNotExist(err) {
 		t.Errorf("root:%v not found (%v)", prefix("file"), err)
 	}
 }
@@ -51,18 +50,16 @@ func TestRemove(t *testing.T) {
 	fs := Create(rfs, prefixPath)
 
 	f, err := fs.OpenFile("file", os.O_CREATE, 0666)
-	defer f.Close()
 	if err != nil {
 		t.Errorf("OpenFile: %v", err)
 	}
+	defer f.Close()
 
-	err = fs.Remove("file")
-	if err != nil {
+	if err := fs.Remove("file"); err != nil {
 		t.Errorf("Remove: %v", err)
 	}
 
-	_, err = rfs.Stat(prefix("file"))
-	if os.IsExist(err) {
+	if _, err := rfs.Stat(prefix("file")); os.IsExist(err) {
 		t.Errorf("root:%v found (%v)", prefix("file"), err)
 	}
 }
@@ -72,18 +69,16 @@ func TestRename(t *testing.T) {
 	fs := Create(rfs, prefixPath)
 
 	f, err := fs.OpenFile("file", os.O_CREATE, 0666)
-	defer f.Close()
 	if err != nil {
 		t.Errorf("OpenFile: %v", err)
 	}
+	defer f.Close()
 
-	err = fs.Rename("file", "file2")
-	if err != nil {
+	if err := fs.Rename("file", "file2"); err != nil {
 		t.Errorf("Rename: %v", err)
 	}
 
-	_, err = rfs.Stat(prefix("file2"))
-	if os.IsNotExist(err) {
+	if _, err = rfs.Stat(prefix("file2")); os.IsNotExist(err) {
 		t.Errorf("root:%v not found (%v)", prefix("file2"), err)
 	}
 }
@@ -92,14 +87,31 @@ func TestMkdir(t *testing.T) {
 	rfs := rootfs()
 	fs := Create(rfs, prefixPath)
 
-	err := fs.Mkdir("dir", 0777)
-	if err != nil {
+	if err := fs.Mkdir("dir", 0777); err != nil {
 		t.Errorf("Mkdir: %v", err)
 	}
 
-	_, err = rfs.Stat(prefix("dir"))
-	if os.IsNotExist(err) {
+	if _, err := rfs.Stat(prefix("dir")); os.IsNotExist(err) {
 		t.Errorf("root:%v not found (%v)", prefix("dir"), err)
+	}
+}
+
+func TestSymlink(t *testing.T) {
+	rfs := rootfs()
+	fs := Create(rfs, prefixPath)
+
+	f, err := fs.OpenFile("file", os.O_CREATE, 0666)
+	if err != nil {
+		t.Errorf("OpenFile: %v", err)
+	}
+	defer f.Close()
+
+	if err = fs.Symlink("/file", "file2"); err != nil {
+		t.Errorf("Symlink: %v", err)
+	}
+
+	if _, err = rfs.Stat(prefix("file2")); os.IsNotExist(err) {
+		t.Errorf("root:%v not found (%v)", prefix("file2"), err)
 	}
 }
 
@@ -108,10 +120,10 @@ func TestStat(t *testing.T) {
 	fs := Create(rfs, prefixPath)
 
 	f, err := fs.OpenFile("file", os.O_CREATE, 0666)
-	defer f.Close()
 	if err != nil {
 		t.Errorf("OpenFile: %v", err)
 	}
+	defer f.Close()
 
 	fi, err := fs.Stat("file")
 	if os.IsNotExist(err) {
@@ -153,10 +165,10 @@ func TestLstat(t *testing.T) {
 	fs := Create(rfs, prefixPath)
 
 	f, err := fs.OpenFile("file", os.O_CREATE, 0666)
-	defer f.Close()
 	if err != nil {
 		t.Errorf("OpenFile: %v", err)
 	}
+	defer f.Close()
 
 	fi, err := fs.Lstat("file")
 	if os.IsNotExist(err) {
@@ -197,21 +209,19 @@ func TestReadDir(t *testing.T) {
 	rfs := rootfs()
 	fs := Create(rfs, prefixPath)
 
-	err := fs.Mkdir("dir", 0777)
-	if err != nil {
+	if err := fs.Mkdir("dir", 0777); err != nil {
 		t.Errorf("Mkdir: %v", err)
 	}
 
-	_, err = rfs.Stat(prefix("dir"))
-	if os.IsNotExist(err) {
+	if _, err := rfs.Stat(prefix("dir")); os.IsNotExist(err) {
 		t.Errorf("root:%v not found (%v)", prefix("dir"), err)
 	}
 
 	f, err := fs.OpenFile("dir/file", os.O_CREATE, 0666)
-	defer f.Close()
 	if err != nil {
 		t.Errorf("OpenFile: %v", err)
 	}
+	defer f.Close()
 
 	s, err := fs.ReadDir("dir")
 	if err != nil {

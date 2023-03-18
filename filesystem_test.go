@@ -178,7 +178,6 @@ func (fs *rmFS) ReadDir(path string) ([]os.FileInfo, error) {
 		if fi.IsDir() {
 			s := make([]os.FileInfo, len(fi.subfiles))
 			for i, sf := range fi.subfiles {
-
 				s[i] = sf
 			}
 			for _, sf := range s {
@@ -219,7 +218,7 @@ func (fs *rmFS) Remove(name string) error {
 		return nil
 	}
 
-	return &os.PathError{"remove", name, os.ErrNotExist}
+	return &os.PathError{Op: "remove", Path: name, Err: os.ErrNotExist}
 }
 
 func TestRemoveAll(t *testing.T) {
@@ -277,5 +276,4 @@ func TestRemoveAll(t *testing.T) {
 	if _, ok := fs.files["/"]; !ok {
 		t.Errorf("/ was removed")
 	}
-
 }

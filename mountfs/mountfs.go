@@ -2,10 +2,11 @@ package mountfs
 
 import (
 	"errors"
-	"github.com/blang/vfs"
 	"os"
 	filepath "path"
 	"strings"
+
+	"github.com/3JoB/vfs"
 )
 
 // ErrBoundary is returned if an operation
@@ -127,6 +128,16 @@ func (fs MountFS) Mkdir(name string, perm os.FileMode) error {
 	return mount.Mkdir(innerPath, perm)
 }
 
+// Symlink creates a symlink
+func (fs MountFS) Symlink(oldname, newname string) error {
+	oldMount, oldInnerName := findMount(oldname, fs.mounts, fs.rootFS, string(fs.PathSeparator()))
+	newMount, newInnerName := findMount(newname, fs.mounts, fs.rootFS, string(fs.PathSeparator()))
+	if oldMount != newMount {
+		return ErrBoundary
+	}
+	return oldMount.Symlink(oldInnerName, newInnerName)
+}
+
 type innerFileInfo struct {
 	os.FileInfo
 	name string
@@ -134,6 +145,14 @@ type innerFileInfo struct {
 
 func (fi innerFileInfo) Name() string {
 	return fi.name
+}
+
+// Open opens the named file on the given Filesystem for reading.
+// If successful, methods on the returned file can be used for reading.
+// The associated file descriptor has mode os.O_RDONLY.
+// If there is an error, it will be of type *PathError.
+func (fs MountFS) Open(name string) (vfs.File, error) {
+	return fs.OpenFile(name, os.O_RDONLY, 0)
 }
 
 // Stat returns the fileinfo of a file

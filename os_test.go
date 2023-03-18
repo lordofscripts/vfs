@@ -16,12 +16,17 @@ func TestOSCreate(t *testing.T) {
 	if err != nil {
 		t.Errorf("Create: %s", err)
 	}
-	err = f.Close()
-	if err != nil {
+	if err = f.Close(); err != nil {
 		t.Errorf("Close: %s", err)
 	}
-	err = fs.Remove(f.Name())
+	f2, err := fs.Open("/tmp/test123")
 	if err != nil {
+		t.Errorf("Open: %s", err)
+	}
+	if err := f2.Close(); err != nil {
+		t.Errorf("Close: %s", err)
+	}
+	if err := fs.Remove(f.Name()); err != nil {
 		t.Errorf("Remove: %s", err)
 	}
 }

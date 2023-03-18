@@ -9,14 +9,16 @@ import (
 	"sync"
 	"time"
 
-	"github.com/blang/vfs"
+	"github.com/3JoB/vfs"
 )
 
 var (
 	// ErrReadOnly is returned if the file is read-only and write operations are disabled.
 	ErrReadOnly = errors.New("File is read-only")
+
 	// ErrWriteOnly is returned if the file is write-only and read operations are disabled.
 	ErrWriteOnly = errors.New("File is write-only")
+
 	// ErrIsDirectory is returned if the file under operation is not a regular file but a directory.
 	ErrIsDirectory = errors.New("Is directory")
 )
@@ -30,6 +32,8 @@ type MemFS struct {
 	wd   *fileInfo
 	lock *sync.RWMutex
 }
+
+var _ vfs.Filesystem = &MemFS{}
 
 // Create a new MemFS filesystem which entirely resides in memory
 func Create() *MemFS {
@@ -57,7 +61,7 @@ type fileInfo struct {
 	mutex   *sync.RWMutex
 }
 
-func (fi fileInfo) Sys() interface{} {
+func (fi fileInfo) Sys() any {
 	return fi.fs
 }
 
@@ -77,9 +81,9 @@ func (fi fileInfo) IsDir() bool {
 
 // ModTime returns the modification time.
 // Modification time is updated on:
-// 	- Creation
-// 	- Rename
-// 	- Open (except with O_RDONLY)
+//   - Creation
+//   - Rename
+//   - Open (except with O_RDONLY)
 func (fi fileInfo) ModTime() time.Time {
 	return fi.modTime
 }
@@ -112,10 +116,10 @@ func (fs *MemFS) Mkdir(name string, perm os.FileMode) error {
 	base := filepath.Base(name)
 	parent, fi, err := fs.fileInfo(name)
 	if err != nil {
-		return &os.PathError{"mkdir", name, err}
+		return &os.PathError{Op: "mkdir", Path: name, Err: err}
 	}
 	if fi != nil {
-		return &os.PathError{"mkdir", name, fmt.Errorf("Directory %q already exists", name)}
+		return &os.PathError{Op: "mkdir", Path: name, Err: fmt.Errorf("directory %q already exists", name)}
 	}
 
 	fi = &fileInfo{
@@ -127,6 +131,18 @@ func (fs *MemFS) Mkdir(name string, perm os.FileMode) error {
 		fs:      fs,
 	}
 	parent.childs[base] = fi
+	return nil
+}
+
+func (fs *MemFS) Symlink(oldname, newname string) error {
+	file, err := fs.OpenFile(
+		newname,
+		os.O_CREATE|os.O_WRONLY|os.O_TRUNC,
+		0777|os.ModeSymlink)
+	if err != nil {
+		return err
+	}
+	file.Write([]byte(oldname))
 	return nil
 }
 
@@ -150,10 +166,10 @@ func (fs *MemFS) ReadDir(path string) ([]os.FileInfo, error) {
 	path = filepath.Clean(path)
 	_, fi, err := fs.fileInfo(path)
 	if err != nil {
-		return nil, &os.PathError{"readdir", path, err}
+		return nil, &os.PathError{Op: "readdir", Path: path, Err: err}
 	}
 	if fi == nil || !fi.dir {
-		return nil, &os.PathError{"readdir", path, vfs.ErrNotDirectory}
+		return nil, &os.PathError{Op: "readdir", Path: path, Err: vfs.ErrNotDirectory}
 	}
 
 	fis := make([]os.FileInfo, 0, len(fi.childs))
@@ -165,43 +181,48 @@ func (fs *MemFS) ReadDir(path string) ([]os.FileInfo, error) {
 }
 
 func (fs *MemFS) fileInfo(path string) (parent *fileInfo, node *fileInfo, err error) {
-	path = filepath.Clean(path)
-	segments := vfs.SplitPath(path, PathSeparator)
+	return fs.relativeFileInfo(fs.wd, path)
+}
 
+func (fs *MemFS) relativeFileInfo(wd *fileInfo, path string) (parent *fileInfo, node *fileInfo, err error) {
+	parent, segments := fs.dirSegments(wd, path)
 	// Shortcut for working directory and root
-	if len(segments) == 1 {
-		if segments[0] == "" {
-			return nil, fs.root, nil
-		} else if segments[0] == "." {
-			return fs.wd.parent, fs.wd, nil
-		}
+	if len(segments) == 0 {
+		return parent.parent, parent, nil
 	}
 
 	// Determine root to traverse
-	parent = fs.root
-	if segments[0] == "." {
-		parent = fs.wd
-	}
-	segments = segments[1:]
-
-	// Further directories
-	if len(segments) > 1 {
-		for _, seg := range segments[:len(segments)-1] {
-
-			if parent.childs == nil {
-				return nil, nil, os.ErrNotExist
+	for _, seg := range segments[:len(segments)-1] {
+		if parent.childs == nil {
+			return nil, nil, os.ErrNotExist
+		}
+		entry, ok := parent.childs[seg]
+		if !ok {
+			return nil, nil, os.ErrNotExist
+		}
+		if entry.dir {
+			parent = entry
+		} else if entry.mode&os.ModeSymlink != 0 {
+			// Look up interior symlink
+			_, parent, err = fs.relativeFileInfo(parent, string(*entry.buf))
+			if err != nil {
+				return nil, nil, err
 			}
-			if entry, ok := parent.childs[seg]; ok && entry.dir {
-				parent = entry
-			} else {
-				return nil, nil, os.ErrNotExist
+			// Symlink was not to a directory
+			if parent == nil {
+				return nil, nil, vfs.ErrNotDirectory
 			}
+		} else {
+			return nil, nil, os.ErrNotExist
 		}
 	}
 
 	lastSeg := segments[len(segments)-1]
 	if parent.childs != nil {
 		if node, ok := parent.childs[lastSeg]; ok {
+			if node.mode&os.ModeSymlink != 0 {
+				return fs.relativeFileInfo(parent, string(*node.buf))
+			}
 			return parent, node, nil
 		}
 	} else {
@@ -211,8 +232,29 @@ func (fs *MemFS) fileInfo(path string) (parent *fileInfo, node *fileInfo, err er
 	return parent, nil, nil
 }
 
+func (fs *MemFS) dirSegments(wd *fileInfo, path string) (parent *fileInfo, segments []string) {
+	path = filepath.Clean(path)
+	segments = vfs.SplitPath(path, PathSeparator)
+
+	// Determine root to traverse
+	parent = fs.root
+	if segments[0] == "." {
+		parent = wd
+	}
+	segments = segments[1:]
+	return parent, segments
+}
+
 func hasFlag(flag int, flags int) bool {
 	return flags&flag == flag
+}
+
+// Open opens the named file on the given Filesystem for reading.
+// If successful, methods on the returned file can be used for reading.
+// The associated file descriptor has mode os.O_RDONLY.
+// If there is an error, it will be of type *PathError.
+func (fs *MemFS) Open(name string) (vfs.File, error) {
+	return fs.OpenFile(name, os.O_RDONLY, 0)
 }
 
 // OpenFile opens a file handle with a specified flag (os.O_RDONLY etc.) and perm (e.g. 0666).
@@ -226,12 +268,12 @@ func (fs *MemFS) OpenFile(name string, flag int, perm os.FileMode) (vfs.File, er
 	base := filepath.Base(name)
 	fiParent, fiNode, err := fs.fileInfo(name)
 	if err != nil {
-		return nil, &os.PathError{"open", name, err}
+		return nil, &os.PathError{Op: "open", Path: name, Err: err}
 	}
 
 	if fiNode == nil {
 		if !hasFlag(os.O_CREATE, flag) {
-			return nil, &os.PathError{"open", name, os.ErrNotExist}
+			return nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
 		}
 		fiNode = &fileInfo{
 			name:    base,
@@ -244,10 +286,10 @@ func (fs *MemFS) OpenFile(name string, flag int, perm os.FileMode) (vfs.File, er
 		fiParent.childs[base] = fiNode
 	} else { // file exists
 		if hasFlag(os.O_CREATE|os.O_EXCL, flag) {
-			return nil, &os.PathError{"open", name, os.ErrExist}
+			return nil, &os.PathError{Op: "open", Path: name, Err: os.ErrExist}
 		}
 		if fiNode.dir {
-			return nil, &os.PathError{"open", name, ErrIsDirectory}
+			return nil, &os.PathError{Op: "open", Path: name, Err: ErrIsDirectory}
 		}
 	}
 
@@ -270,9 +312,9 @@ func (fi *fileInfo) file(flag int) (vfs.File, error) {
 	if hasFlag(os.O_RDWR, flag) {
 		return f, nil
 	} else if hasFlag(os.O_WRONLY, flag) {
-		f = &woFile{f}
+		f = &woFile{File: f}
 	} else {
-		f = &roFile{f}
+		f = &roFile{File: f}
 	}
 
 	return f, nil
@@ -307,10 +349,10 @@ func (fs *MemFS) Remove(name string) error {
 	name = filepath.Clean(name)
 	fiParent, fiNode, err := fs.fileInfo(name)
 	if err != nil {
-		return &os.PathError{"remove", name, err}
+		return &os.PathError{Op: "remove", Path: name, Err: err}
 	}
 	if fiNode == nil {
-		return &os.PathError{"remove", name, os.ErrNotExist}
+		return &os.PathError{Op: "remove", Path: name, Err: os.ErrNotExist}
 	}
 
 	delete(fiParent.childs, fiNode.name)
@@ -327,20 +369,20 @@ func (fs *MemFS) Rename(oldpath, newpath string) error {
 	oldpath = filepath.Clean(oldpath)
 	fiOldParent, fiOld, err := fs.fileInfo(oldpath)
 	if err != nil {
-		return &os.PathError{"rename", oldpath, err}
+		return &os.PathError{Op: "rename", Path: oldpath, Err: err}
 	}
 	if fiOld == nil {
-		return &os.PathError{"rename", oldpath, os.ErrNotExist}
+		return &os.PathError{Op: "rename", Path: oldpath, Err: os.ErrNotExist}
 	}
 
 	newpath = filepath.Clean(newpath)
 	fiNewParent, fiNew, err := fs.fileInfo(newpath)
 	if err != nil {
-		return &os.PathError{"rename", newpath, err}
+		return &os.PathError{Op: "rename", Path: newpath, Err: err}
 	}
 
 	if fiNew != nil {
-		return &os.PathError{"rename", newpath, os.ErrExist}
+		return &os.PathError{Op: "rename", Path: newpath, Err: os.ErrExist}
 	}
 
 	newBase := filepath.Base(newpath)
@@ -364,10 +406,10 @@ func (fs *MemFS) Stat(name string) (os.FileInfo, error) {
 	// dir, base := filepath.Split(name)
 	_, fi, err := fs.fileInfo(name)
 	if err != nil {
-		return nil, &os.PathError{"stat", name, err}
+		return nil, &os.PathError{Op: "stat", Path: name, Err: err}
 	}
 	if fi == nil {
-		return nil, &os.PathError{"stat", name, os.ErrNotExist}
+		return nil, &os.PathError{Op: "stat", Path: name, Err: os.ErrNotExist}
 	}
 	return fi, nil
 }

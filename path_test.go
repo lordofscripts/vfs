@@ -2,7 +2,6 @@ package vfs
 
 import (
 	"reflect"
-
 	"testing"
 )
 

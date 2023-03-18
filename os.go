@@ -18,6 +18,11 @@ func (fs OsFS) PathSeparator() uint8 {
 	return os.PathSeparator
 }
 
+// Open wraps os.Open
+func (fs OsFS) Open(name string) (File, error) {
+	return os.Open(name)
+}
+
 // OpenFile wraps os.OpenFile
 func (fs OsFS) OpenFile(name string, flag int, perm os.FileMode) (File, error) {
 	return os.OpenFile(name, flag, perm)
@@ -28,9 +33,23 @@ func (fs OsFS) Remove(name string) error {
 	return os.Remove(name)
 }
 
+// RemoveAll removes path and any children it contains.
+// It removes everything it can but returns the first error
+// it encounters. If the path does not exist, RemoveAll
+// returns nil (no error).
+// If there is an error, it will be of type *PathError.
+func (fs OsFS) RemoveAll(name string) error {
+	return os.RemoveAll(name)
+}
+
 // Mkdir wraps os.Mkdir
 func (fs OsFS) Mkdir(name string, perm os.FileMode) error {
 	return os.Mkdir(name, perm)
+}
+
+// Symlink wraps os.Symlink
+func (fs OsFS) Symlink(oldname, newname string) error {
+	return os.Symlink(oldname, newname)
 }
 
 // Rename wraps os.Rename

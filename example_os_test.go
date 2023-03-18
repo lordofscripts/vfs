@@ -3,11 +3,10 @@ package vfs_test
 import (
 	"fmt"
 
-	"github.com/blang/vfs"
+	"github.com/3JoB/vfs"
 )
 
 func ExampleOsFS() {
-
 	// Create a vfs accessing the filesystem of the underlying OS
 	osFS := vfs.OS()
 	err := osFS.Mkdir("/tmp/vfs_example", 0777)

@@ -2,9 +2,10 @@ package mountfs
 
 import (
 	"errors"
-	"github.com/blang/vfs"
 	"os"
 	"testing"
+
+	"github.com/3JoB/vfs"
 )
 
 type mountTest struct {
@@ -19,31 +20,31 @@ type mtres struct {
 
 var mountTests = []mountTest{
 	{
-		[]string{
+		mounts: []string{
 			"/tmp",
 		},
-		map[string]mtres{
-			"/":         {"/", "/"},
-			"/tmp":      {"/tmp", "/"},
-			"/tmp/test": {"/tmp", "/test"},
+		results: map[string]mtres{
+			"/":         {mountPath: "/", innerPath: "/"},
+			"/tmp":      {mountPath: "/tmp", innerPath: "/"},
+			"/tmp/test": {mountPath: "/tmp", innerPath: "/test"},
 		},
 	},
 
 	{
-		[]string{
+		mounts: []string{
 			"/home",
 			"/home/user1",
 			"/home/user2",
 		},
-		map[string]mtres{
-			"/":                            {"/", "/"},
-			"/tmp":                         {"/", "/tmp"},
-			"/tmp/test":                    {"/", "/tmp/test"},
-			"/home":                        {"/home", "/"},
-			"/home/user1":                  {"/home/user1", "/"},
-			"/home/user2":                  {"/home/user2", "/"},
-			"/home/user1/subdir":           {"/home/user1", "/subdir"},
-			"/home/user2/subdir/subsubdir": {"/home/user2", "/subdir/subsubdir"},
+		results: map[string]mtres{
+			"/":                            {mountPath: "/", innerPath: "/"},
+			"/tmp":                         {mountPath: "/", innerPath: "/tmp"},
+			"/tmp/test":                    {mountPath: "/", innerPath: "/tmp/test"},
+			"/home":                        {mountPath: "/home", innerPath: "/"},
+			"/home/user1":                  {mountPath: "/home/user1", innerPath: "/"},
+			"/home/user2":                  {mountPath: "/home/user2", innerPath: "/"},
+			"/home/user1/subdir":           {mountPath: "/home/user1", innerPath: "/subdir"},
+			"/home/user2/subdir/subsubdir": {mountPath: "/home/user2", innerPath: "/subdir/subsubdir"},
 		},
 	},
 }
@@ -139,6 +140,9 @@ func TestOpenFile(t *testing.T) {
 	}
 	if n := f.Name(); n != "/tmp/testfile" {
 		t.Errorf("Unexpected filename: %s", n)
+	}
+	if _, err := fs.Open("/tmp/testfile"); err != nil {
+		t.Errorf("Open: %s", err)
 	}
 }
 

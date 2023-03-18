@@ -1,12 +1,13 @@
 package memfs
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/blang/vfs"
+	"github.com/3JoB/vfs"
 )
 
 func TestInterface(t *testing.T) {
@@ -32,7 +33,6 @@ func TestCreate(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Unexpected error creating file: %s", err)
 		}
-
 	}
 
 	// Create same file again, but truncate it
@@ -69,7 +69,6 @@ func TestCreate(t *testing.T) {
 			t.Errorf("Wrong name: %s", name)
 		}
 	}
-
 }
 
 func TestMkdirAbsRel(t *testing.T) {
@@ -123,8 +122,109 @@ func TestMkdirTree(t *testing.T) {
 		t.Errorf("Expected error creating directory with non-existing parent")
 	}
 
-	//TODO: Subdir of file
+	// TODO: Subdir of file
 }
+
+func TestSymlink(t *testing.T) {
+	fs := Create()
+
+	if err := vfs.MkdirAll(fs, "/tmp", 0755); err != nil {
+		t.Fatal("Unable to create /tmp:", err)
+	}
+	if err := vfs.WriteFile(fs, "/tmp/teacup", []byte("i am a teacup"), 0644); err != nil {
+		t.Fatal("Unable to fill teacup:", err)
+	}
+	err := fs.Symlink("/tmp/teacup", "/tmp/cup")
+	if err != nil {
+		t.Fatal("Symlink failed:", err)
+	}
+	fluid, err := vfs.ReadFile(fs, "/tmp/cup")
+	if err != nil {
+		t.Fatal("Failed to read from /tmp/cup:", err)
+	}
+	if string(fluid) != "i am a teacup" {
+		t.Fatal("Wrong contents in cup. got:", string(fluid))
+	}
+}
+
+func TestDirectorySymlink(t *testing.T) {
+	fs := Create()
+
+	if err := vfs.MkdirAll(fs, "/foo/a/b", 0755); err != nil {
+		t.Fatal("Unable mkdir /foo/a/b:", err)
+	}
+
+	if err := vfs.WriteFile(fs, "/foo/a/b/c", []byte("I can \"c\" clearly now"), 0644); err != nil {
+		t.Fatal("Unable to write /foo/a/b/c:", err)
+	}
+
+	if err := fs.Symlink("/foo/a/b", "/foo/also_b"); err != nil {
+		t.Fatal("Unable to symlink /foo/also_b -> /foo/a/b:", err)
+	}
+
+	contents, err := vfs.ReadFile(fs, "/foo/also_b/c")
+	if err != nil {
+		t.Fatal("Unable to read /foo/also_b/c:", err)
+	}
+	if string(contents) != "I can \"c\" clearly now" {
+		t.Fatal("Unexpected contents read from c:", err)
+	}
+}
+
+func TestMultipleAndRelativeSymlinks(t *testing.T) {
+	fs := Create()
+	if err := vfs.MkdirAll(fs, "a/real_b/real_c", 0755); err != nil {
+		t.Fatal("Unable mkdir a/real_b/real_c:", err)
+	}
+
+	for _, fsEntry := range []struct {
+		name, link, content string
+	}{
+		{name: "a/b", link: "real_b"},
+		{name: "a/b/c", link: "real_c"},
+		{name: "a/b/c/real_d", content: "Lah dee dah"},
+		{name: "a/b/c/d", link: "real_d"},
+		{name: "a/d", link: "b/c/d"},
+	} {
+		if fsEntry.link != "" {
+			if err := fs.Symlink(fsEntry.link, fsEntry.name); err != nil {
+				t.Fatalf("Unable to symlink %s -> %s: %v", fsEntry.name, fsEntry.link, err)
+			}
+		} else if fsEntry.content != "" {
+			if err := vfs.WriteFile(fs, fsEntry.name, []byte(fsEntry.content), 0644); err != nil {
+				t.Fatalf("Unable to write %s: %v", fsEntry.name, err)
+			}
+		}
+	}
+
+	for _, fn := range []string{
+		"a/b/c/d",
+		"a/d",
+	} {
+		contents, err := vfs.ReadFile(fs, fn)
+		if err != nil {
+			t.Fatalf("Unable to read %s: %v", fn, err)
+		}
+		if string(contents) != "Lah dee dah" {
+			t.Fatalf("Unexpected contents read from %s: %v", fn, err)
+		}
+	}
+}
+
+func TestSymlinkIsNotADirectory(t *testing.T) {
+	fs := Create()
+	if err := vfs.MkdirAll(fs, "a/real_b/real_c", 0755); err != nil {
+		t.Fatal("Unable mkdir a/real_b/real_c:", err)
+	}
+	if err := fs.Symlink("broken", "a/b"); err != nil {
+		t.Fatal("Unable to symlink a/b -> broken:", err)
+	}
+	if err := vfs.WriteFile(fs, "a/b/c", []byte("Whatever"), 0644); !strings.Contains(err.Error(), vfs.ErrNotDirectory.Error()) {
+		t.Fatal("Expected an error when writing a/b/c:", err)
+	}
+}
+
+// TODO: overwrite/remove symlinks
 
 func TestReadDir(t *testing.T) {
 	fs := Create()
@@ -176,7 +276,6 @@ func TestReadDir(t *testing.T) {
 	if _, err := fs.ReadDir("/usr"); err == nil {
 		t.Errorf("Expected error readdir(nofound)")
 	}
-
 }
 
 func TestRemove(t *testing.T) {
@@ -276,6 +375,25 @@ func TestReadWrite(t *testing.T) {
 	}
 }
 
+func TestOpen(t *testing.T) {
+	fs := Create()
+	f, err := fs.OpenFile("/readme.txt", os.O_CREATE|os.O_RDWR, 0666)
+	if err != nil {
+		t.Fatalf("OpenFile: %s", err)
+	}
+	if _, err = f.Write([]byte("test")); err != nil {
+		t.Fatalf("Write: %s", err)
+	}
+	f.Close()
+	f2, err := fs.Open("/readme.txt")
+	if err != nil {
+		t.Errorf("Open: %s", err)
+	}
+	if err := f2.Close();  err != nil {
+		t.Errorf("Close: %s", err)
+	}
+}
+
 func TestOpenRO(t *testing.T) {
 	fs := Create()
 	f, err := fs.OpenFile("/readme.txt", os.O_CREATE|os.O_RDONLY, 0666)
@@ -365,11 +483,11 @@ func TestTruncateToLength(t *testing.T) {
 		size int64
 		err  bool
 	}{
-		{-1, true},
-		{0, false},
-		{int64(len(dots) - 1), false},
-		{int64(len(dots)), false},
-		{int64(len(dots) + 1), false},
+		{size: -1, err: true},
+		{size: 0, err: false},
+		{size: int64(len(dots) - 1), err: false},
+		{size: int64(len(dots)), err: false},
+		{size: int64(len(dots) + 1), err: false},
 	}
 	for _, param := range params {
 		fs := Create()
@@ -495,7 +613,7 @@ func readFile(fs vfs.Filesystem, name string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return ioutil.ReadAll(f)
+	return io.ReadAll(f)
 }
 
 func TestRename(t *testing.T) {
@@ -554,7 +672,6 @@ func TestRename(t *testing.T) {
 	if err := fs.Rename("/newdirectory/README.txt", "/README.txt"); err == nil {
 		t.Errorf("Expected error renaming file")
 	}
-
 }
 
 func TestModTime(t *testing.T) {

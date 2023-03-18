@@ -7,7 +7,7 @@ import (
 
 // Dummy creates a new dummy filesystem which returns the given error on every operation.
 func Dummy(err error) *DummyFS {
-	return &DummyFS{err}
+	return &DummyFS{err: err}
 }
 
 // DummyFS is dummy filesystem which returns an error on every operation.
@@ -19,6 +19,11 @@ type DummyFS struct {
 // PathSeparator returns the path separator
 func (fs DummyFS) PathSeparator() uint8 {
 	return '/'
+}
+
+// Open returns dummy error
+func (fs DummyFS) Open(name string) (File, error) {
+	return fs.OpenFile(name, os.O_RDONLY, 0)
 }
 
 // OpenFile returns dummy error
@@ -41,6 +46,11 @@ func (fs DummyFS) Mkdir(name string, perm os.FileMode) error {
 	return fs.err
 }
 
+// Symlink returns dummy error
+func (fs DummyFS) Symlink(oldname, newname string) error {
+	return fs.err
+}
+
 // Stat returns dummy error
 func (fs DummyFS) Stat(name string) (os.FileInfo, error) {
 	return nil, fs.err
@@ -60,15 +70,15 @@ func (fs DummyFS) ReadDir(path string) ([]os.FileInfo, error) {
 // To create a DummyFS returning a dummyFile instead of an error
 // you can your own DummyFS:
 //
-// 	type writeDummyFS struct {
-// 		Filesystem
-// 	}
+//	type writeDummyFS struct {
+//		Filesystem
+//	}
 //
-// 	func (fs writeDummyFS) OpenFile(name string, flag int, perm os.FileMode) (File, error) {
-// 		return DummyFile(dummyError), nil
-// 	}
+//	func (fs writeDummyFS) OpenFile(name string, flag int, perm os.FileMode) (File, error) {
+//		return DummyFile(dummyError), nil
+//	}
 func DummyFile(err error) *DumFile {
-	return &DumFile{err}
+	return &DumFile{err: err}
 }
 
 // DumFile represents a dummy File
@@ -124,7 +134,7 @@ type DumFileInfo struct {
 	IMode    os.FileMode
 	IModTime time.Time
 	IDir     bool
-	ISys     interface{}
+	ISys     any
 }
 
 // Name returns the field IName
@@ -153,6 +163,6 @@ func (fi DumFileInfo) IsDir() bool {
 }
 
 // Sys returns the field ISys
-func (fi DumFileInfo) Sys() interface{} {
+func (fi DumFileInfo) Sys() any {
 	return fi.ISys
 }

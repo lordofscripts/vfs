@@ -8,6 +8,7 @@ import (
 
 var (
 	errDummy = errors.New("Not implemented")
+
 	// Complete dummy base
 	baseFSDummy = Dummy(errDummy)
 	ro          = ReadOnly(baseFSDummy)
@@ -66,6 +67,13 @@ func TestMkDir(t *testing.T) {
 	}
 }
 
+func TestROSymlink(t *testing.T) {
+	err := ro.Symlink("old", "new")
+	if err != ErrReadOnly {
+		t.Errorf("Symlink error expected")
+	}
+}
+
 type writeDummyFS struct {
 	Filesystem
 }
@@ -77,7 +85,7 @@ func (fs writeDummyFS) OpenFile(name string, flag int, perm os.FileMode) (File, 
 
 func TestROOpenFileWrite(t *testing.T) {
 	// Dummy base with mocked OpenFile for write test
-	roWriteMock := ReadOnly(writeDummyFS{Dummy(errDummy)})
+	roWriteMock := ReadOnly(writeDummyFS{Filesystem: Dummy(errDummy)})
 
 	f, err := roWriteMock.OpenFile("name", os.O_RDWR, 0)
 	if err != nil {

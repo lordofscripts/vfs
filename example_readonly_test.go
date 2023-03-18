@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/blang/vfs"
+	"github.com/3JoB/vfs"
 )
 
 // Every vfs.Filesystem could be easily wrapped
@@ -26,7 +26,6 @@ func ExampleRoFS() {
 	if err != nil {
 		fmt.Printf("Could not create file: %s\n", err)
 		return
-
 	}
 	defer f.Close()
 

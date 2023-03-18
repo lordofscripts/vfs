@@ -1,7 +1,7 @@
 package memfs_test
 
 import (
-	"github.com/blang/vfs/memfs"
+	"github.com/3JoB/vfs/memfs"
 )
 
 func ExampleMemFS() {

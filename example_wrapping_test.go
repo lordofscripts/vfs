@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/blang/vfs"
+	"github.com/3JoB/vfs"
 )
 
 type noNewDirs struct {
@@ -13,7 +13,7 @@ type noNewDirs struct {
 }
 
 func NoNewDirs(fs vfs.Filesystem) *noNewDirs {
-	return &noNewDirs{fs}
+	return &noNewDirs{Filesystem: fs}
 }
 
 // Mkdir is disabled
@@ -22,12 +22,11 @@ func (fs *noNewDirs) Mkdir(name string, perm os.FileMode) error {
 }
 
 func ExampleOsFS_myWrapper() {
-
 	// Disable Mkdirs on the OS Filesystem
 	var fs vfs.Filesystem = NoNewDirs(vfs.OS())
 
 	err := fs.Mkdir("/tmp", 0777)
 	if err != nil {
-		fmt.Printf("Mkdir disabled!\n")
+		fmt.Print("Mkdir disabled!\n")
 	}
 }

@@ -1,11 +1,12 @@
 package vfs_test
 
 import (
-	"fmt"
-	"github.com/blang/vfs"
-	"github.com/blang/vfs/memfs"
-	"github.com/blang/vfs/mountfs"
+	"errors"
 	"os"
+
+	"github.com/3JoB/vfs"
+	"github.com/3JoB/vfs/memfs"
+	"github.com/3JoB/vfs/mountfs"
 )
 
 func Example() {
@@ -23,7 +24,7 @@ func Example() {
 	// Return vfs.ErrReadOnly
 	_, err := f.Write([]byte("Write on readonly fs?"))
 	if err != nil {
-		fmt.Errorf("Filesystem is read only!\n")
+		panic(errors.New("filesystem is read only!\n"))
 	}
 
 	// Create a fully writable filesystem in memory

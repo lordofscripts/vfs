@@ -3,7 +3,6 @@ package memfs
 import (
 	"errors"
 	"io"
-	"os"
 )
 
 // Buffer is a usable block of data similar to a file
@@ -13,6 +12,7 @@ type Buffer interface {
 	io.Writer
 	io.Seeker
 	io.Closer
+
 	// Truncate shrinks or extends the size of the Buffer to the specified size.
 	Truncate(int64) error
 }
@@ -21,7 +21,7 @@ type Buffer interface {
 const MinBufferSize = 512
 
 // ErrTooLarge is thrown if it was not possible to enough memory
-var ErrTooLarge = errors.New("Volume too large")
+var ErrTooLarge = errors.New("volume too large")
 
 // Buf is a Buffer working on a slice of bytes.
 type Buf struct {
@@ -38,18 +38,20 @@ func NewBuffer(buf *[]byte) *Buf {
 
 // Seek sets the offset for the next Read or Write on the buffer to offset,
 // interpreted according to whence:
-// 	0 (os.SEEK_SET) means relative to the origin of the file
-// 	1 (os.SEEK_CUR) means relative to the current offset
-// 	2 (os.SEEK_END) means relative to the end of the file
+//
+//	0 (os.SEEK_SET) means relative to the origin of the file
+//	1 (os.SEEK_CUR) means relative to the current offset
+//	2 (os.SEEK_END) means relative to the end of the file
+//
 // It returns the new offset and an error, if any.
 func (v *Buf) Seek(offset int64, whence int) (int64, error) {
 	var abs int64
 	switch whence {
-	case os.SEEK_SET: // Relative to the origin of the file
+	case io.SeekStart: // Relative to the origin of the file
 		abs = offset
-	case os.SEEK_CUR: // Relative to the current offset
+	case io.SeekCurrent: // Relative to the current offset
 		abs = int64(v.ptr) + offset
-	case os.SEEK_END: // Relative to the end
+	case io.SeekEnd: // Relative to the end
 		abs = int64(len(*v.buf)) + offset
 	default:
 		return 0, errors.New("Seek: invalid whence")

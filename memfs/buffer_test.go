@@ -1,11 +1,10 @@
 package memfs
 
 import (
+	"io"
 	"os"
 	"reflect"
 	"strings"
-
-	"io"
 	"testing"
 )
 
@@ -146,7 +145,6 @@ func TestVolumesConcurrentAccess(t *testing.T) {
 	if n, err := v1.Read(p); err != nil || n != len(abc) || string(p) != abc {
 		t.Errorf("Unexpected read error: %d %s, res: %s", n, err, string(p))
 	}
-
 }
 
 func TestSeek(t *testing.T) {
