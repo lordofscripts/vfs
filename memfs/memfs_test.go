@@ -389,7 +389,7 @@ func TestOpen(t *testing.T) {
 	if err != nil {
 		t.Errorf("Open: %s", err)
 	}
-	if err := f2.Close();  err != nil {
+	if err := f2.Close(); err != nil {
 		t.Errorf("Close: %s", err)
 	}
 }

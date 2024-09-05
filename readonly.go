@@ -3,7 +3,6 @@ package vfs
 import (
 	"errors"
 	"os"
-
 )
 
 // ReadOnly creates a readonly wrapper around the given filesystem.
