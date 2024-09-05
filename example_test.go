@@ -4,9 +4,9 @@ import (
 	"errors"
 	"os"
 
-	"github.com/3JoB/vfs"
-	"github.com/3JoB/vfs/memfs"
-	"github.com/3JoB/vfs/mountfs"
+	"github.com/lordofscripts/vfs"
+	"github.com/lordofscripts/vfs/memfs"
+	"github.com/lordofscripts/vfs/mountfs"
 )
 
 func Example() {

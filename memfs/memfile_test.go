@@ -3,7 +3,7 @@ package memfs
 import (
 	"testing"
 
-	"github.com/3JoB/vfs"
+	"github.com/lordofscripts/vfs"
 )
 
 func TestFileInterface(t *testing.T) {

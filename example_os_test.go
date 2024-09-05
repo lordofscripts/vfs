@@ -3,7 +3,7 @@ package vfs_test
 import (
 	"fmt"
 
-	"github.com/3JoB/vfs"
+	"github.com/lordofscripts/vfs"
 )
 
 func ExampleOsFS() {

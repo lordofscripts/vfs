@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/3JoB/vfs"
+	"github.com/lordofscripts/vfs"
 )
 
 type mountTest struct {

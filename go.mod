@@ -1,3 +1,3 @@
-module github.com/3JoB/vfs
+module github.com/lordofscripts/vfs
 
-go 1.20
+go 1.22.1

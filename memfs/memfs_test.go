@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/3JoB/vfs"
+	"github.com/lordofscripts/vfs"
 )
 
 func TestInterface(t *testing.T) {

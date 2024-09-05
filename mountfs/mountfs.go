@@ -6,7 +6,7 @@ import (
 	filepath "path"
 	"strings"
 
-	"github.com/3JoB/vfs"
+	"github.com/lordofscripts/vfs"
 )
 
 // ErrBoundary is returned if an operation

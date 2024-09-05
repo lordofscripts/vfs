@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/3JoB/vfs"
+	"github.com/lordofscripts/vfs"
 )
 
 var (
