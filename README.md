@@ -43,6 +43,7 @@ without the need for glue structures. So, Keep tuned! But to start with:
 * Updated it to use `main` as branch instead of the deprecated `master`
 * Added `go.mod`
 * Included a GO workflow.
+* Has a flexible BitBucket Filesystem `bucketfs` more suitable for testing
 
 ## Usage
 
@@ -91,28 +92,40 @@ fs.Mkdir("/memfs/testdir", 0777)
 // This would create /tmp/testdir inside your OS fs
 // But the rootfs `osfs` is read-only
 fs.Mkdir("/tmp/testdir", 0777)
+
+// Now use a BitBucket Filesystem in Silent mode
+fsb1 := bucketfs.Create()
+fsb1.Mkdir("/bucket/testdir", 0777))
+
+// Or an extended BitBucket Filesystem
+ErrCustom := errors.New("A BitBucket error"))
+fsb2 := bucketfs.CreateWithError(ErrCustom).
+         WithFakeDirs([]string{"/bucket/Dir1", "/bucket/Dir2"}).
+         WithFakeFiles([]string{"/bucket/Dir1/test.doc", "/bucket/Dir2/test.pdf"})
+entries, err := fsb2.ReadDir("/bucket")
 ```
 
-Check detailed examples below. Also check the [GoDocs](http://godoc.org/github.com/3JoB/vfs).
+Check detailed examples below. Also check the [GoDocs](http://godoc.org/github.com/lordofscripts/vfs).
 
 ## Why should I use this lib?
 
 - Only Stdlib
-- (Nearly) Fully tested (Coverage >90%)
+- (Nearly) Fully tested (Coverage >87%)
 - Easy to create your own filesystem
-- Mock a full filesystem for testing (or use included `memfs`)
+- Mock a full filesystem for testing (or use included `memfs` or `bucketfs`)
 - Compose/Wrap Filesystems `ReadOnly(OS())` and write simple Wrappers
-- Many features, see [GoDocs](http://godoc.org/github.com/3JoB/vfs) and examples below
+- Many features, see [GoDocs](http://godoc.org/github.com/lordofscripts/vfs) and examples below
+- Flexible BitBucket filesystem
 
 ## Features and Examples
 
-- [OS Filesystem support](http://godoc.org/github.com/3JoB/vfs#example-OsFS)
-- [ReadOnly Wrapper](http://godoc.org/github.com/3JoB/vfs#example-RoFS)
-- [DummyFS for quick mocking](http://godoc.org/github.com/3JoB/vfs#example-DummyFS)
-- [MemFS - full in-memory filesystem](http://godoc.org/github.com/3JoB/vfs/memfs#example-MemFS)
-- [MountFS - support mounts across filesystems](http://godoc.org/github.com/3JoB/vfs/mountfs#example-MountFS)
+- [OS Filesystem support](http://godoc.org/github.com/lordofscripts/vfs#example-OsFS)
+- [ReadOnly Wrapper](http://godoc.org/github.com/lordofscripts/vfs#example-RoFS)
+- [DummyFS for quick mocking](http://godoc.org/github.com/lordofscripts/vfs#example-DummyFS)
+- [MemFS - full in-memory filesystem](http://godoc.org/github.com/lordofscripts/vfs/memfs#example-MemFS)
+- [MountFS - support mounts across filesystems](http://godoc.org/github.com/lordofscripts/vfs/mountfs#example-MountFS)
 
-### Current state: BETA
+### Current state: RELEASE
 
 While the functionality is quite stable and heavily tested, interfaces are subject to change.
 
