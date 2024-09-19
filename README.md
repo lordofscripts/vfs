@@ -5,6 +5,8 @@
 [![Coverage](https://coveralls.io/repos/github/lordofscripts/vfs/badge.svg?branch=main)](https://coveralls.io/github/lordofscripts/vfs?branch=main)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/lordofscripts/vfs)
 
+![Successful](./doc/repository_logo_vfs.png)
+
 `vfs` is GO library to support *Virtual Filesystems*. It provides the basic
 abstractions of filesystems and implementations, like:
 
@@ -12,38 +14,6 @@ abstractions of filesystems and implementations, like:
 * `memfs` a full filesystem in-memory, and
 * `dummy` which does nothing other than outputting what file operation was
   called without actually modifiying the underlying file system.
-
-## What's Different?
-
-You may have noticed this is a *forked* repository. I forked it from
-[3JoB/vfs](https://github.com/3JoB/vfs) which in turn is an improved fork of
-the original `blang/vfs` by [Benedikt Lang)](https://github.com/blang/vfs).
-
-I originally used BLang's version `v1.0.0`  and was satisfied with it, although I had
-to write some extra code to accomplish what I needed. I realized I needed
-BLang's **Dummy** File System but improved to meet my requirements. Unfortunately,
-after submitting several issues to the original repository, no answer came of
-it. In fact Benedikt's repository has not been updated in 9 years! But it is
-still quite useful in its simplicity!
-
-After testing my own shell object to emulate a Dummy Filesystem, I realized it
-was better to simply enhance his original `DummyFS`. That's how I came across
-**3JoB's** clone tagged `v1.0.0` which has some enhancements over Benedikt's version:
-
-* Support for Symbolic Links
-* Minor changes like using `any` instead of `interface{}`
-
-Therefore, I decided to build upon this one instead. After all, 3JoB's version
-was updated last year (2023).
-
-Is this a YAUF (Yet-Another-Useless-Fork)? well, no! I plan on making certain
-enhancements that would make it suitable for my application out-of-the-box
-without the need for glue structures. So, Keep tuned! But to start with:
-
-* Updated it to use `main` as branch instead of the deprecated `master`
-* Added `go.mod`
-* Included a GO workflow.
-* Has a flexible BitBucket Filesystem `bucketfs` more suitable for testing
 
 ## Usage
 
@@ -55,6 +25,12 @@ Note: Always vendor your dependencies or fix on a specific version tag.
 ```go
 import github.com/lordofscripts/vfs
 ```
+
+![Static Badge](https://img.shields.io/badge/os-MacOS-blue?style=plastic&label=VFS&color=green)
+![Static Badge](https://img.shields.io/badge/os-Linux-blue?style=plastic&label=VFS&color=green)
+![Static Badge](https://img.shields.io/badge/os-Windows-blue?style=plastic&label=VFS&color=green)
+![Static Badge](https://img.shields.io/badge/os-Unix-blue?style=plastic&label=VFS&color=green)
+![Static Badge](https://img.shields.io/badge/vfs-ReadOnly-blue?style=plastic&label=VFS&color=blue)
 
 ```go
 // Create a vfs accessing the filesystem of the underlying OS
@@ -73,7 +49,11 @@ _, err := f.Write([]byte("Write on readonly fs?"))
 if err != nil {
     fmt.Errorf("Filesystem is read only!\n")
 }
+```
 
+![Static Badge](https://img.shields.io/badge/vfs-MemFS-blue?style=plastic&label=VFS&color=blue)
+
+```go
 // Create a fully writable filesystem in memory
 mfs := memfs.Create()
 mfs.Mkdir("/root", 0777)
@@ -92,7 +72,11 @@ fs.Mkdir("/memfs/testdir", 0777)
 // This would create /tmp/testdir inside your OS fs
 // But the rootfs `osfs` is read-only
 fs.Mkdir("/tmp/testdir", 0777)
+```
 
+![Static Badge](https://img.shields.io/badge/vfs-BucketFS-blue?style=plastic&label=VFS&color=blue)
+
+```go
 // Now use a BitBucket Filesystem in Silent mode
 fsb1 := bucketfs.Create()
 fsb1.Mkdir("/bucket/testdir", 0777))
@@ -109,15 +93,16 @@ Check detailed examples below. Also check the [GoDocs](http://godoc.org/github.c
 
 ## Why should I use this lib?
 
-- Only Stdlib
-- (Nearly) Fully tested (Coverage >87%)
+- Pure unadulterated GO
+- (Nearly) Fully tested
 - Easy to create your own filesystem
 - Mock a full filesystem for testing (or use included `memfs` or `bucketfs`)
 - Compose/Wrap Filesystems `ReadOnly(OS())` and write simple Wrappers
-- Many features, see [GoDocs](http://godoc.org/github.com/lordofscripts/vfs) and examples below
 - Flexible BitBucket filesystem
 
 ## Features and Examples
+
+Many features, see [GoDocs](http://godoc.org/github.com/lordofscripts/vfs) and examples below
 
 - [OS Filesystem support](http://godoc.org/github.com/lordofscripts/vfs#example-OsFS)
 - [ReadOnly Wrapper](http://godoc.org/github.com/lordofscripts/vfs#example-RoFS)
@@ -142,9 +127,46 @@ GO libraries but many were too bloated and included other appendages I was not
 interested in. I loved this VFS version because it had no other dependencies.
 
 
-### Contribution
+## What's Different (History)?
 
-Feel free to make a pull request. For bigger changes create a issue first to discuss about it.
+The original GO-VFS repository was `github.com/blang/vfs` by
+[Benedikt Lang)](https://github.com/blang/vfs). Which stopped at **v1.0.0** about
+nine (9) years ago. It was a quite mature implementation which I was actually
+using in one of my projects. But it came short in emulating a Dry Run. I ended
+up writing my own quick & grey [Dry Run](https://github.com/lordofscripts/wipechromium/blob/main/file_ops.go)
+for that purpose, and it worked quite well.
+
+Since I was still using `blang/vfs` in the Unit Tests (only), I figured I might
+as well invest some time and integrate it fully to replace my Dry Run as a
+mere exercise. I started looking for better-fitting alternatives. There were none,
+but there were about 50+ forks of the original `blang/vfs` but all where just
+abandoned forks with no extra commits (people's fake trophies?). In that long list
+I came across the single fork that had actually extra commits and extra
+functionality.
+
+So, I discovered 3JoB's fork tagged wrongly `v1.0.0` when it should have been
+`v1.1.0` because it built on the original with added functionality:
+
+* Support for Symbolic Links
+* Support for Walk function
+* Minor changes like using `any` instead of `interface{}`
+
+But [3JoB/vfs](https://github.com/3JoB/vfs)'s version didn't quite meet my requirements.
+While the original version dated from 9 years ago, 3JoB's last commit was a year
+ago, but it seemed to have ended there too. I decided to fork that and enhance it:
+
+Is this a YAUF (Yet-Another-Useless-Fork)? well, no! I plan on making certain
+enhancements that would make it suitable for my application out-of-the-box
+without the need for glue structures. So, Keep tuned! But to start with:
+
+* Updated it to use `main` as branch instead of the deprecated `master`
+* Added `go.mod`
+* Included a GO workflow for building.
+* Has a flexible BitBucket Filesystem `bucketfs` more suitable for testing
+* Bumped version to `v1.2.0` to properly reflect new functionality beyond
+  Benedikt's & 3JoB's.
+
+In due time more changes will come.
 
 ### License
 
