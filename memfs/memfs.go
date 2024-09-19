@@ -134,6 +134,10 @@ func (fs *MemFS) Mkdir(name string, perm os.FileMode) error {
 	return nil
 }
 
+func (fs *MemFS) MkdirAll(path string, perm os.FileMode) error {
+	return vfs.MkdirAll(fs, path, perm)
+}
+
 func (fs *MemFS) Symlink(oldname, newname string) error {
 	file, err := fs.OpenFile(
 		newname,
@@ -357,6 +361,10 @@ func (fs *MemFS) Remove(name string) error {
 
 	delete(fiParent.childs, fiNode.name)
 	return nil
+}
+
+func (fs *MemFS) RemoveAll(path string) error {
+	return vfs.RemoveAll(fs, path)
 }
 
 // Rename renames (moves) a file.

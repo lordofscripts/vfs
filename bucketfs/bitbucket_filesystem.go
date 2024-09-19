@@ -157,6 +157,10 @@ func (bfs *BitBucketFS) Remove(name string) error {
 	return bfs.executePath("Remove", name)
 }
 
+func (bfs *BitBucketFS) RemoveAll(path string) error {
+	return vfs.RemoveAll(bfs, path)
+}
+
 // Rename renames oldPath to newPath
 // Errors: os.LinkError
 func (bfs *BitBucketFS) Rename(oldPath, newPath string) error {
@@ -246,6 +250,10 @@ func (bfs *BitBucketFS) Mkdir(name string, perm os.FileMode) error {
 		}
 	}
 	return errx
+}
+
+func (bfs *BitBucketFS) MkdirAll(path string, perm os.FileMode) error {
+	return vfs.MkdirAll(bfs, path, perm)
 }
 
 // Open opens the file.

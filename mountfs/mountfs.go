@@ -111,6 +111,11 @@ func (fs MountFS) Remove(name string) error {
 	return mount.Remove(innerPath)
 }
 
+func (fs MountFS) RemoveAll(path string) error {
+	mount, innerPath := findMount(path, fs.mounts, fs.rootFS, string(fs.PathSeparator()))
+	return mount.RemoveAll(innerPath)
+}
+
 // Rename renames a file.
 // Renames across filesystems are not allowed.
 func (fs MountFS) Rename(oldpath, newpath string) error {
@@ -126,6 +131,11 @@ func (fs MountFS) Rename(oldpath, newpath string) error {
 func (fs MountFS) Mkdir(name string, perm os.FileMode) error {
 	mount, innerPath := findMount(name, fs.mounts, fs.rootFS, string(fs.PathSeparator()))
 	return mount.Mkdir(innerPath, perm)
+}
+
+func (fs MountFS) MkdirAll(path string, perm os.FileMode) error {
+	mount, innerPath := findMount(path, fs.mounts, fs.rootFS, string(fs.PathSeparator()))
+	return mount.MkdirAll(innerPath, perm)
 }
 
 // Symlink creates a symlink

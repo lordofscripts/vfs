@@ -47,6 +47,10 @@ func (fs OsFS) Mkdir(name string, perm os.FileMode) error {
 	return os.Mkdir(name, perm)
 }
 
+func (fs OsFS) MkdirAll(path string, perm os.FileMode) error {
+	return os.MkdirAll(path, perm)
+}
+
 // Symlink wraps os.Symlink
 func (fs OsFS) Symlink(oldname, newname string) error {
 	return os.Symlink(oldname, newname)

@@ -36,6 +36,10 @@ func (fs DummyFS) Remove(name string) error {
 	return fs.err
 }
 
+func (fs DummyFS) RemoveAll(path string) error {
+	return fs.err
+}
+
 // Rename returns dummy error
 func (fs DummyFS) Rename(oldpath, newpath string) error {
 	return fs.err
@@ -43,6 +47,10 @@ func (fs DummyFS) Rename(oldpath, newpath string) error {
 
 // Mkdir returns dummy error
 func (fs DummyFS) Mkdir(name string, perm os.FileMode) error {
+	return fs.err
+}
+
+func (fs DummyFS) MkdirAll(path string, perm os.FileMode) error {
 	return fs.err
 }
 
