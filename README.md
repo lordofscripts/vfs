@@ -90,6 +90,8 @@ entries, err := fsb2.ReadDir("/bucket")
 ```
 
 Check detailed examples below. Also check the [GoDocs](http://godoc.org/github.com/lordofscripts/vfs).
+The BucketFS can also be made read-only in the same manner as the first example
+above. See Detailed documentation about [BucketVFS](./doc/vfs_bucketfs.md).)
 
 ## Why should I use this lib?
 
@@ -99,6 +101,7 @@ Check detailed examples below. Also check the [GoDocs](http://godoc.org/github.c
 - Mock a full filesystem for testing (or use included `memfs` or `bucketfs`)
 - Compose/Wrap Filesystems `ReadOnly(OS())` and write simple Wrappers
 - Flexible BitBucket filesystem
+
 
 ## Features and Examples
 
