@@ -26,10 +26,11 @@ Note: Always vendor your dependencies or fix on a specific version tag.
 import github.com/lordofscripts/vfs
 ```
 
-![Static Badge](https://img.shields.io/badge/os-MacOS-blue?style=plastic&label=VFS&color=green)
-![Static Badge](https://img.shields.io/badge/os-Linux-blue?style=plastic&label=VFS&color=green)
-![Static Badge](https://img.shields.io/badge/os-Windows-blue?style=plastic&label=VFS&color=green)
-![Static Badge](https://img.shields.io/badge/os-Unix-blue?style=plastic&label=VFS&color=green)
+![Static Badge](https://img.shields.io/badge/os-MacOS-blue?style=plastic&label=OS&color=green)
+![Static Badge](https://img.shields.io/badge/os-Linux-blue?style=plastic&label=OS&color=green)
+![Static Badge](https://img.shields.io/badge/os-Windows-blue?style=plastic&label=OS&color=green)
+![Static Badge](https://img.shields.io/badge/os-Unix-blue?style=plastic&label=OS&color=green)
+![Static Badge](https://img.shields.io/badge/vfs-OS-blue?style=plastic&label=VFS&color=blue)
 ![Static Badge](https://img.shields.io/badge/vfs-ReadOnly-blue?style=plastic&label=VFS&color=blue)
 
 ```go
@@ -93,7 +94,7 @@ Check detailed examples below. Also check the [GoDocs](http://godoc.org/github.c
 The BucketFS can also be made read-only in the same manner as the first example
 above. See Detailed documentation about [BucketVFS](./doc/vfs_bucketfs.md).)
 
-## Why should I use this lib?
+## Why should I use this package?
 
 - Pure unadulterated GO
 - (Nearly) Fully tested
