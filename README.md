@@ -96,6 +96,8 @@ above. See Detailed documentation about [BucketVFS](./doc/vfs_bucketfs.md).)
 
 ## Why should I use this package?
 
+- It has much more functionality than any of its predecessors. This is not a YAUF
+  (Yet-Another-Useless-Fork))
 - Pure unadulterated GO
 - (Nearly) Fully tested
 - Easy to create your own filesystem
